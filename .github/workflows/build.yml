@@ -1,61 +1,36 @@
 name: Build Kivy APK
 
-on:
-  push:
-    branches:
-      - main # Or whatever branch you want to trigger the build from
+on: push: branches: - main pull_request: branches: - main workflow_dispatch:
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+jobs: build: runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9' # Or your desired Python version
+  - name: Set up Python
+    uses: actions/setup-python@v4
+    with:
+      python-version: '3.10'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build
-        pip install kivy[full]
-        pip install "kivy[android]"
-        pip install pyjnius==1.5.0 # Required for buildozer
-        pip install six
-        pip install plyer
-        pip install android-permissions # If you use it
-        # Add any other required dependencies here
+  - name: Install dependencies
+    run: |
+      sudo apt update
+      sudo apt install -y git zip unzip openjdk-17-jdk python3-pip
+      pip install --upgrade pip
+      pip install buildozer cython virtualenv
 
-    - name: Install Buildozer
-      run: |
-        pip install buildozer
+  - name: Set up Buildozer
+    run: |
+      buildozer init
 
-    - name: Initialize Buildozer
-      run: |
-        buildozer init
+  - name: Build APK
+    run: |
+      buildozer -v android debug
 
-    - name: Configure Buildozer
-      run: |
-        # Modify buildozer.spec as needed. Here's an example:
-        sed -i 's/# title = my application/title = My Kivy App/' buildozer.spec
-        sed -i 's/# package.name = org.test.myapp/package.name = org.yourdomain.myapp/' buildozer.spec
-        sed -i 's/# package.domain = org.test/package.domain = org.yourdomain/' buildozer.spec
-        sed -i 's/# source.include_exts = py,png,jpg,kv,atlas/source.include_exts = py,png,jpg,kv/' buildozer.spec
-        sed -i 's/# requirements = python3,kivy/requirements = python3,kivy,plyer,android-permissions/' buildozer.spec #adjust requirments
-        # Add any other necessary modifications to buildozer.spec
+  - name: Upload APK Artifact
+    uses: actions/upload-artifact@v3
+    with:
+      name: Kivy-APK
+      path: bin/*.apk
 
-    - name: Build APK
-      run: |
-        buildozer android debug
-        # or buildozer android release, if you have a keystore configured.
-
-    - name: Upload APK as artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: kivy-apk
-        path: bin/*.apk
-        
