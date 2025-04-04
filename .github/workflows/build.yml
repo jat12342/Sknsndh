@@ -40,7 +40,7 @@ jobs:
           buildozer android debug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3.1.3  # Updated to a stable version
+        uses: actions/upload-artifact@v4  # ✅ Fixed with the latest version
         with:
           name: kivy-apk
           path: bin/*.apk
