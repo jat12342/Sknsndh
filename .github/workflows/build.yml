@@ -57,8 +57,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y autoconf libtool
 
-      - name: Run Autoupdate
-        run: autoupdate
+      # Removed autoupdate step
+      # - name: Run Autoupdate
+      #   run: autoupdate
 
       - name: Allow Undefined Macros
         run: |
