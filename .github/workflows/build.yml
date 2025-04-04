@@ -1,54 +1,62 @@
-steps:
-  - name: Checkout code
-    uses: actions/checkout@v3
+name: Build Kivy APK
 
-  - name: Set up Python
-    uses: actions/setup-python@v4
-    with:
-      python-version: '3.10'
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
-  - name: Install Dependencies
-    run: |
-      sudo dpkg --add-architecture i386
-      sudo apt update
-      sudo apt install -y python3-pip build-essential git zip unzip openjdk-11-jdk autoconf automake libtool
-      pip install --upgrade pip
-      pip install --upgrade buildozer cython python-for-android
+jobs:
+  build:
+    name: Build APK with Buildozer
+    runs-on: ubuntu-latest
 
-  - name: Fix NDK Version
-    run: |
-      mkdir -p ~/.buildozer/android/platform
-      cd ~/.buildozer/android/platform
-      wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
-      unzip android-ndk-r25b-linux.zip
-      mv android-ndk-r25b android-ndk
-      echo "ANDROID_NDK_HOME=$HOME/.buildozer/android/platform/android-ndk" >> $GITHUB_ENV
-      echo "ANDROID_NDK_ROOT=$HOME/.buildozer/android/platform/android-ndk" >> $GITHUB_ENV
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-  - name: Set Android API Level
-    run: echo "ANDROIDAPI=30" >> $GITHUB_ENV
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-  - name: Cleanup Before Build
-    run: rm -rf .buildozer
+      - name: Install Dependencies
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt update
+          sudo apt install -y python3-pip build-essential git zip unzip openjdk-11-jdk
+          pip install --upgrade pip
+          pip install --upgrade buildozer cython python-for-android
 
-  - name: Install Buildozer Requirements
-    run: |
-      sudo apt update
-      sudo apt install -y \
-        libncurses6 libstdc++6 libgtk2.0-0 \
-        libidn12 libglu1-mesa \
-        libsndfile1 libmtdev1 zlib1g-dev libffi-dev \
-        libssl-dev autoconf libtool pkg-config
+      - name: Fix NDK Version
+        run: |
+          mkdir -p ~/.buildozer/android/platform
+          cd ~/.buildozer/android/platform
+          wget https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
+          unzip android-ndk-r25b-linux.zip
+          mv android-ndk-r25b android-ndk
+          echo "ANDROID_NDK_HOME=$HOME/.buildozer/android/platform/android-ndk" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$HOME/.buildozer/android/platform/android-ndk" >> $GITHUB_ENV
 
-  # Commented out the autoupdate step
-  # - name: Run autoupdate
-  #   run: autoupdate
+      - name: Set Android API Level
+        run: echo "ANDROIDAPI=30" >> $GITHUB_ENV
 
-  - name: Build APK
-    run: buildozer android debug
+      - name: Cleanup Before Build
+        run: rm -rf .buildozer
 
-  - name: Upload APK
-    uses: actions/upload-artifact@v4
-    with:
-      name: kivy-apk
-      path: bin/*.apk
+      - name: Install Buildozer Requirements
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            libncurses6 libstdc++6 libgtk2.0-0 \
+            libidn12 libglu1-mesa \
+            libsndfile1 libmtdev1 zlib1g-dev libffi-dev \
+            libssl-dev autoconf automake libtool m4 pkg-config
+
+      - name: Build APK
+        run: buildozer android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kivy-apk
+          path: bin/*.apk
