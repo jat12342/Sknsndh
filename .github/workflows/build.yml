@@ -1,53 +1,39 @@
 name: Build Kivy APK
 
 on:
-  push:
-    branches:
-      - main  # Change this if your main branch has a different name
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Checkout repo
+      uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.10
 
-      - name: Install Dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y python3-pip git zip unzip openjdk-21-jdk
-          pip install --upgrade pip
-          pip install buildozer cython virtualenv python-for-android six
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential libssl-dev libffi-dev python3-dev \
+                            python3-pip git zip unzip openjdk-17-jdk
+        python3 -m pip install --upgrade pip
+        pip install buildozer
 
-      - name: Set up Buildozer
-        run: |
-          python -m virtualenv venv
-          source venv/bin/activate
-          pip install --upgrade pip setuptools
-          pip install buildozer cython python-for-android six
-          buildozer init  # Ensure buildozer.spec exists
+    - name: Install Docker
+      uses: docker-practice/actions-setup-docker@master
 
-      - name: Set Android NDK
-        run: echo "ANDROID_NDK_HOME=$ANDROID_NDK" >> $GITHUB_ENV
+    - name: Build APK with Buildozer
+      run: |
+        cd ${{ github.workspace }}
+        buildozer android debug
 
-      - name: Clean Previous Builds
-        run: |
-          source venv/bin/activate
-          buildozer android clean
-
-      - name: Build APK
-        run: |
-          source venv/bin/activate
-          buildozer -v android debug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Kivy-APK
-          path: bin/*.apk
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: kivy-apk
+        path: bin/*.apk
